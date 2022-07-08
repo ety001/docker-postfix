@@ -1,20 +1,18 @@
-From centos:7
+FROM alpine:3.10
 
-RUN yum -y install epel-release \
-    && yum -y install python34-devel && \
-       curl https://bootstrap.pypa.io/get-pip.py | python3.4 && \
-       pip3 install chaperone \
-    && yum -y install net-tools \
-                      openssl \
-                      postfix rsyslog \
-                      cyrus-sasl cyrus-sasl-lib cyrus-sasl-plain \
-                      opendkim \
-    && yum clean all
+RUN \
+    apk add --no-cache \
+    supervisor \
+    openssl \
+    postfix \
+    opendkim \
+    opendkim-utils \
+    cyrus-sasl \
+    libsasl \
+    cyrus-sasl-plain
 
-COPY chaperone.conf /etc/chaperone.d/chaperone.conf
+COPY supervisord.conf /etc/supervisord.conf
+COPY postfix.sh /usr/local/bin/
+COPY entrypoint.sh /usr/local/bin/
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
-
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["run"]
+CMD ["/usr/local/bin/entrypoint.sh"]
