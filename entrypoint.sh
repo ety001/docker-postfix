@@ -8,11 +8,14 @@ postconf -e 'inet_interfaces = all'
 # The internet hostname of this mail system.
 if [ ! -z "$MTA_HOST" ]; then
     postconf -e "myhostname = $MTA_HOST"
+    postconf -e "mydomain = $MTA_HOST"
 fi
 
 # The domain name that locally-posted mail appears to come from, and that
 # locally posted mail is delivered to. Example: $mydomain
 postconf -e 'myorigin = $mydomain'
+postconf -e 'smtpd_banner = ETY001 Email Server'
+postconf -e 'maillog_file = /dev/stdout'
 # Network style
 postconf -e 'mynetworks_style = host'
 # The list of domains that are delivered via the $local_transport mail
@@ -30,7 +33,7 @@ postconf -e 'local_recipient_maps ='
 # From http://wiki.apache.org/spamassassin/OtherTricks#line-69
 # This setting will slow down the sending from connecting clients. This trick
 # can reduce spam as spammers dont have time to wait.
-postconf -e 'smtpd_client_restrictions = sleep 5'
+postconf -e 'smtpd_client_restrictions = permit_sasl_authenticated'
 postconf -e 'smtpd_delay_reject = no'
 # Reject if the MAIL FROM domain has
 #   1) no DNS A or MX record
@@ -45,9 +48,8 @@ postconf -e 'smtpd_hard_error_limit = 20'
 
 ## SMTP-AUTH configuration
 # The name of the Postfix SMTP server's local SASL authentication realm. (default: empty)
-postconf -e 'smtpd_sasl_local_domain ='
-# Enable SASL authentication in the Postfix SMTP server. By default, the
-# Postfix SMTP server does not use authentication.
+postconf -e 'smtpd_sasl_local_domain = $mydomain'
+# Enable SASL authentication in the Postfix SMTP server.
 postconf -e 'smtpd_sasl_auth_enable = yes'
 # The SASL plug-in type that the Postfix SMTP server should use for authentication.
 postconf -e 'smtpd_sasl_type = cyrus'
@@ -64,6 +66,8 @@ postconf -e 'smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authentic
 # Optional restrictions that the Postfix SMTP server applies in the context of
 # a client RCPT TO command, after smtpd_relay_restrictions.
 postconf -e 'smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination'
+# email file size 5M
+postconf -e 'message_size_limit = 5242880'
 
 # Use sasl2
 cat > /etc/sasl2/smtpd.conf <<EOF
@@ -75,7 +79,7 @@ EOF
 echo $MTA_USERS | tr , \\n | while IFS=':' read -r _user _password; do
     echo $_password | saslpasswd2 -p -c -u $MTA_HOST $_user
 done
-chown postfix /etc/sasl2/sasldb2
+chown postfix:postfix /etc/sasl2/sasldb2
 
 ## TLS configuration
 TLSDIR=/etc/postfix/tls

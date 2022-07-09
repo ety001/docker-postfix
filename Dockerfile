@@ -9,7 +9,10 @@ RUN \
     opendkim-utils \
     cyrus-sasl \
     libsasl \
-    cyrus-sasl-plain
+    cyrus-sasl-plain \
+    cyrus-sasl-crammd5 \
+    cyrus-sasl-digestmd5 \
+    cyrus-sasl-ntlm
 
 COPY supervisord.conf /etc/supervisord.conf
 COPY postfix.sh /usr/local/bin/
