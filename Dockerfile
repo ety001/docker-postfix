@@ -9,6 +9,7 @@ RUN \
     opendkim-utils \
     cyrus-sasl \
     libsasl \
+    cyrus-sasl-login \
     cyrus-sasl-plain \
     cyrus-sasl-crammd5 \
     cyrus-sasl-digestmd5 \
