@@ -161,7 +161,7 @@ fi
 # $DKIM_SELECTOR.private is the private key for the domain
 # $DKIM_SELECTOR.txt is the public key that will publish in DNS TXT record
 echo "OpenDKIM: Regulating the permissions of Default DKIM Keys..."
-chown -R root:opendkim $DKIM_KEYDIR
+chown -R opendkim:opendkim $DKIM_KEYDIR
 chmod 640 $DKIM_KEYDIR/$DKIM_SELECTOR.private
 chmod 644 $DKIM_KEYDIR/$DKIM_SELECTOR.txt
 
@@ -179,7 +179,7 @@ cat > $DKIM_CONF <<EOF
 Mode                sv
 Socket              inet:8891@127.0.0.1
 
-Selector	    ${DKIM_SELECTOR}
+Selector	        ${DKIM_SELECTOR}
 Domain              ${MTA_DOMAIN}
 KeyFile             ${DKIM_KEYDIR}/${DKIM_SELECTOR}.private
 Canonicalization    relaxed/simple
@@ -187,6 +187,7 @@ ExternalIgnoreList  refile:${DKIM_TRUSTED_HOSTS}
 InternalHosts       refile:${DKIM_TRUSTED_HOSTS}
 KeyTable            refile:${DKIM_KEY_TABLE}
 SigningTable        refile:${DKIM_SIGNING_TABLE}
+UserID              opendkim
 EOF
 
 echo "OpenDKIM: Configuring $DKIM_KEY_TABLE..."
