@@ -55,7 +55,7 @@ shell> docker run
            -e MTA_USERS=user:passwd \     # 要创建多个用户时，使用半角逗号隔开: -e MTA_USERS=user1:passwd1,...,userN:passwdN
            -v dkim_keys:/etc/opendkim/keys \
            -v tls:/etc/postfix/tls \ # TLS 支持，可选。开启后，为 SMTP 使用 STARTTLS。
-           --name postfix -d m31271n/postfix
+           --name postfix -d ety001/postfix
 ```
 
 > 在 SMTP 客户端中，填写用户名为 `user1@mail.example.com`，填写密码为 `passwd1`。
@@ -87,12 +87,12 @@ MX 记录所指的主机名称，不应该是别名（CNAME 记录）。在正�
 纯 IP 地址就可能在递送邮件时造成问题。
 
 ### 实践
-假设 Postfix 运行在 `mail.m31271n.com` 上：
+假设 Postfix 运行在 `mail.example.com` 上：
 
 | Type   | Host              | Answer            |
 |--------|-------------------|-------------------|
-| MX     | m31271n.com       | mail.m31271n.com  |
-| A      | mail.m31271n.com  | 1.2.3.4           |
+| MX     | example.com       | mail.example.com  |
+| A      | mail.example.com  | 1.2.3.4           |
 
 ## 避免你的邮件被当成垃圾邮件
 
@@ -109,7 +109,7 @@ MX 记录所指的主机名称，不应该是别名（CNAME 记录）。在正�
 
 如果你确实在黑名单里，可以去列有你 IP 的黑名单的组织进行申诉，请求在黑名单上抹掉你。
 
-### 配置 PTR 记录
+### 配置 PTR 记录 (rDNS)
 PTR 记录，是电子邮件系统中的邮件交换记录的一种，也就是 IP 反向解析，通过设置 PTR 可以提高发信方信誉，提高送达率。
 
 因此，你的 Postfix 系统的 IP 地址必须在 DNS 里有一个指向 Postfix 主机规范名称的 PTR 记录，这样才能保证所有 SMTP 服务器都愿意收下你寄出的邮件。
@@ -138,8 +138,8 @@ SPF 数据应该创建为 SPF 记录。但是很多 DNS 服务商并不支持 SP
 
 | Type   | Host              | Answer              |
 |--------|-------------------|---------------------|
-| TXT    | m31271n.com       | `v=spf1 mx ~all`    |
-| SPF    | m31271n.com       | `v=spf1 mx ~all`    |
+| TXT    | example.com       | `v=spf1 mx ~all`    |
+| SPF    | example.com       | `v=spf1 mx ~all`    |
 
 这条记录表示发信 IP 指向的主机为可信主机， `~all` 表示除此以外的主机为软拒绝。
 

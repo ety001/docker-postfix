@@ -2,27 +2,53 @@
 
 假设要为 `example.com` 域设置一个邮件服务器 `mail.example.com`（IP 地址为 1.2.3.4），并开启 STARTTLS 的支持。
 
-## 提前准备
-准备为 `mail.example.com` 开启 STARTTLS 支持时需要使用的证书和私钥：
-
-* `mail.example.com.crt`
-* `mail.example.com.key`
-
 ## 创建 Postfix 容器
 
-创建目录 `dkim_keys` 和 `tls`。
-
-在目录 `tls` 中放置证书和私钥，运行容器时，STARTTLS 支持将自动开启。
+创建目录 `/etc/postfix_conf/dkim_keys` 和 `/etc/postfix_conf/tls`。
 
 ```sh
-shell> docker run
-           -p 25:25 \
-           -e MTA_DOMAIN=example.com \
-           -e MTA_HOST=mail.example.com \
-           -e MTA_USERS=user:passwd \
-           -v dkim_keys:/etc/opendkim/keys \
-           -v tls:/etc/postfix/tls \
-           --name postfix -d m31271n/postfix
+mkdir -p /etc/postfix_conf/dkim_keys
+mkdir -p /etc/postfix_conf/tls
+```
+
+运行临时容器，不带 STARTTLS 功能
+
+```sh
+shell> docker run --name postfix \
+          -itd --rm\
+          --restart always \
+          -p 25:25 \
+          -e MTA_DOMAIN=example.com \
+          -e MTA_HOST=mail.example.com \
+          -e MTA_USERS=user:passwd \
+          -v /etc/postfix_conf/dkim_keys:/etc/opendkim/keys \
+          ety001/postfix
+```
+
+使用 [acme.sh](https://acme.sh) 来申请证书并安装证书
+
+```sh
+shell> acme.sh --issue -d mail.example.com --dns dns_cf
+shell> acme.sh --installcert \
+    -d mail.example.com \
+    --key-file /etc/postfix_conf/tls/mail.example.com.key \
+    --fullchain-file /etc/postfix_conf/tls/mail.example.com.crt \
+    --reloadcmd "docker restart postfix"
+```
+
+停止容器，启动正式容器（即多增加一个证书目录的映射）
+
+```sh
+shell> docker stop postfix
+shell> docker run --name postfix \
+          -itd --restart always \
+          -p 25:25 \
+          -e MTA_DOMAIN=example.com \
+          -e MTA_HOST=mail.example.com \
+          -e MTA_USERS=user:passwd \
+          -v /etc/postfix_conf/dkim_keys:/etc/opendkim/keys \
+          -v /etc/postfix_conf/tls:/etc/postfix/tls \
+          ety001/postfix
 ```
 
 ## 配置 MX 记录 和 A 记录
@@ -35,7 +61,7 @@ shell> docker run
 * MX 保证向 `example.com` 域发送的邮件就会被递送到 `mail.example.com`。
 * A 记录保证能解析到 `mail.example.com` 的 IP 地址。
 
-## 配置 PTR 记录
+## 配置 PTR 记录 (rDNS)
 
 为 `1.2.3.4` 配置反向解析，值为 `mail.example.com`。
 
